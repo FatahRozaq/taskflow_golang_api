@@ -181,6 +181,29 @@ func CreateTask(c *gin.Context) {
 		return
 	}
 
+	jakartaLoc, err := time.LoadLocation("Asia/Jakarta")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":     "error",
+			"statusCode": http.StatusInternalServerError,
+			"message":    "Failed to load timezone",
+			"error":      err.Error(),
+		})
+		return
+	}
+
+	if input.DueDate != nil {
+		*input.DueDate = input.DueDate.In(jakartaLoc)
+	} else {
+		today := time.Now().In(jakartaLoc)
+		defaultDue := time.Date(today.Year(), today.Month(), today.Day(), 23, 59, 0, 0, jakartaLoc)
+		input.DueDate = &defaultDue
+	}
+
+	if input.CompletedAt != nil {
+		*input.CompletedAt = input.CompletedAt.In(jakartaLoc)
+	}
+
 	if validationErrors := validateTaskInput(&input); len(validationErrors) > 0 {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status":     "error",
@@ -254,6 +277,39 @@ func UpdateTask(c *gin.Context) {
 		return
 	}
 
+	jakartaLoc, err := time.LoadLocation("Asia/Jakarta")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":     "error",
+			"statusCode": http.StatusInternalServerError,
+			"message":    "Failed to load timezone",
+			"error":      err.Error(),
+		})
+		return
+	}
+
+	var dueDate *time.Time
+	var completedAt *time.Time
+
+	if input.DueDate != nil {
+		jakartaTime := input.DueDate.In(jakartaLoc)
+		dueDate = &jakartaTime
+	}
+
+	if input.CompletedAt != nil {
+		jakartaTime := input.CompletedAt.In(jakartaLoc)
+		completedAt = &jakartaTime
+	}
+
+	if input.Status == "Done" && completedAt == nil {
+		now := time.Now().In(jakartaLoc)
+		completedAt = &now
+	}
+
+	if input.Status != "Done" {
+		completedAt = nil
+	}
+
 	if validationErrors := validateTaskInput(&input); len(validationErrors) > 0 {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status":     "error",
@@ -270,8 +326,8 @@ func UpdateTask(c *gin.Context) {
 	task.Priority = input.Priority
 	task.UserID = input.UserID
 	task.CategoryID = input.CategoryID
-	task.DueDate = input.DueDate
-	task.CompletedAt = input.CompletedAt
+	task.DueDate = dueDate
+	task.CompletedAt = completedAt
 
 	if err := config.DB.Save(&task).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{

@@ -4,6 +4,8 @@ import (
 	"log"
 	"os"
 
+	"time"
+
 	"github.com/FatahRozaq/taskflow_golang_api/config"
 	"github.com/FatahRozaq/taskflow_golang_api/internal/middleware"
 	"github.com/FatahRozaq/taskflow_golang_api/internal/routes"
@@ -13,6 +15,11 @@ import (
 )
 
 func main() {
+	loc, err := time.LoadLocation("Asia/Jakarta")
+	if err != nil {
+		log.Fatal(err)
+	}
+	time.Local = loc
 	config.LoadConfig()
 	config.ConnectDB()
 	services.InitFirebase()

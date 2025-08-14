@@ -14,7 +14,8 @@ import (
 func CheckAndSendReminders() {
 	log.Println("Notification worker: Checking for task deadlines...")
 
-	now := time.Now()
+	loc, _ := time.LoadLocation("Asia/Jakarta")
+	now := time.Now().In(loc)
 	deadlineThreshold := now.Add(5 * time.Minute)
 
 	var tasksDueSoon []models.Task
@@ -34,6 +35,8 @@ func CheckAndSendReminders() {
 
 	if len(tasksDueSoon) == 0 {
 		log.Println("Notification worker: No tasks are due soon. Work cycle complete.")
+		log.Println("Go now():", now)
+		log.Println("Go now UTC():", now.UTC())
 		return
 	}
 
