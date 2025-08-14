@@ -1,3 +1,6 @@
+Nama : Muhamad Fatah Rozaq
+Email : fatah.rozaq20@gmail.com
+
 ## Instalasi Golang
 
 Setelah berhasil clone, lakukan perintah :
